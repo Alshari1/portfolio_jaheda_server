@@ -35,6 +35,8 @@ async function run() {
 
 
         const portfolioCollection = client.db('portfolioJahedaDB').collection('portfolio')
+        const clientCollection = client.db('portfolioJahedaDB').collection('clients')
+
 
         app.get('/portfolio', async (req, res) => {
             try {
@@ -50,38 +52,107 @@ async function run() {
             }
         });
 
-        app.get('/portfolio/:id', (req, res) => {
-            const id = req.params.id;
-            console.log(id)
+        app.get('/portfolio/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await portfolioCollection.findOne(query)
+            res.send(result)
+            console.log(result)
         })
 
-        app.post('/portfolio', async(req, res) => {
+
+        app.get('/clients', async (req, res) => {
+            try {
+                if (!portfolioCollection) {
+                    return res.status(500).send('Database not connected');
+                }
+                const cursor = clientCollection.find();
+                const result = await cursor.toArray();
+                res.send(result);
+
+            } catch (error) {
+                console.error('Error portfolio:', error);
+            }
+        })
+
+        app.post('/clients', async (req, res) => {
+            try {
+                const data = req.body;
+                const result = await clientCollection.insertOne(data);
+                // console.log(data)
+                res.send(result)
+            } catch (error) {
+                res.send(error)
+            }
+        })
+        app.post('/portfolio', async (req, res) => {
             const data = req.body;
             const result = await portfolioCollection.insertOne(data);
             res.send(result)
         })
-        app.patch('/portfolio/:id', async(req, res) => {
+        app.put('/portfolio/:id', async (req, res) => {
             try {
                 const id = req.params.id;
-            const data = parseInt(req.body.updatedText);
-            console.log(req.body)
-            // const updatedData = data + 1;
-            // const query = { _id: new ObjectId(id) }
-            // const options = { upsert: true };
-            // const updateDoc = {
-            //     $set: {
-            //         heartCount: updatedData
-            //     },
-            //   };
-            //   const result = await portfolioCollection.updateOne(query, updateDoc, options)
-            //   res.send(result)
+                const data = req.body;
+                const query = { _id: new ObjectId(id) }
+                const updateDoc = {
+                    $set: {
+                        thumbnailUrl: data.thumbnailUrl,
+                        portfolioUrl: data.portfolioUrl,
+                        title: data.title,
+                        description: data.description,
+                        priceFrom: data.priceFrom,
+                        priceTo: data.priceTo,
+                        industries: data.industries,
+                        durationFrom: data.durationFrom,
+                        durationTo: data.durationTo,
+                    },
+                };
+                const result = await portfolioCollection.updateMany(query, updateDoc)
+                res.send(result)
+            } catch (error) {
+                console.log(err)
+            }
+        })
+        app.patch('/portfolio/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const data = parseInt(req.body.updatedText);
+                const updatedData = data + 1;
+                const query = { _id: new ObjectId(id) }
+                const options = { upsert: true };
+                const updateDoc = {
+                    $set: {
+                        heartCount: updatedData
+                    },
+                };
+                const result = await portfolioCollection.updateOne(query, updateDoc, options)
+                res.send(result)
+
+            } catch (error) {
+                console.log(error)
+            }
+        })
+        app.patch('/clients/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const data = req.body;
+                const query = { _id: new ObjectId(id) }
+                const updateDoc = {
+                    $set: {
+                        status: data.status
+                    },
+                };
+                const result = await clientCollection.updateOne(query, updateDoc)
+                console.log(result)
+                res.send(result)
 
             } catch (error) {
                 console.log(error)
             }
         })
 
-        app.delete('/portfolio/:id', async(req, res) => {
+        app.delete('/portfolio/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: new ObjectId(id) }
             const result = await portfolioCollection.deleteOne(query)
