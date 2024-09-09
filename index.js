@@ -3,12 +3,26 @@ const cors = require('cors');
 const app = express()
 
 app.use(express.json());
-app.use(cors())
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'https://portfolio-jaheda.web.app'
+    ],
+    credentials: true
+}));
+
+const allowedOrigins = process.env.NODE_ENV === 'production' ? 
+    ['https://portfolio-jaheda.web.app'] : 
+    ['https://portfolio-jaheda.web.app', 'http://localhost:5173', 'http://localhost:5174'];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
 require('dotenv').config()
 
 
-// portfolioJaheda
-// ZqeVFJJn2oloZEEl
 
 const port = process.nextTick.PORT || 5000
 
@@ -57,7 +71,7 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await portfolioCollection.findOne(query)
             res.send(result)
-            console.log(result)
+            // console.log(result)
         })
 
 
@@ -150,6 +164,13 @@ async function run() {
             } catch (error) {
                 console.log(error)
             }
+        })
+
+        app.delete('/clients/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await clientCollection.deleteOne(query)
+            res.send(result)
         })
 
         app.delete('/portfolio/:id', async (req, res) => {
